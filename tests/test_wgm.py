@@ -81,5 +81,6 @@ class TestWGM(unittest.TestCase):
         conf_file = os.path.join(
             self.config_path, 'clients', 'user-1', 'user-1.conf')
         self.assertTrue(os.path.exists(conf_file))
-        conf = open(conf_file, 'r').read()
+        with open(conf_file, 'r') as file:
+            conf = file.read()
         self.assertIn('Address = ', conf)
