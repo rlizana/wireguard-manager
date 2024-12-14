@@ -25,7 +25,7 @@ To install WireGuard Manager (wgm) from source, follow these steps:
     pip install dist/*.whl
     ```
 
-This will allow you to call `wgm` from anywhere in the console.
+This will allow you to call [wgm](http://_vscodecontentref_/0) from anywhere in the console.
 
 ### As a Package
 
@@ -60,30 +60,18 @@ poetry build
 
 To install the necessary dependencies for running unit tests with `unittest`, follow these steps:
 
-1. Install the development dependencies:
+Install the development dependencies:
     ```bash
     poetry install --with dev
+    poetry run pre-commit install
     ```
 
-2. Run the unit tests:
+Run the unit tests:
     ```bash
     python -m unittest discover tests
     ```
 
-## Desarrollo
-
-Para instalar las dependencias necesarias para desarrollar, sigue estos pasos:
-```bash
-poetry install --with dev
-poetry run pre-commit install
-```
-
-En desarrollo puede lanzar el comando
+Or you can run the command
 ```bash
 poetry run python -m wgm
-```
-
-Para lanzar los tests
-```bash
-poetry run python -m unittest
 ```
