@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "wgm"
+version = "0.1.0"
+description = ""
+authors = ["Roberto Lizana <rober.lizana@gmail.com>"]
+readme = "README.md"
+packages = [
+    { include = "wgm", from = "." }
+]
+
+
+[tool.poetry.dependencies]
+python = "^3.12"
+cleo = "^2.1.0"
+
+[tool.poetry.dev-dependencies]
+pre-commit = "^3.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+wgm = "wgm.console:main"

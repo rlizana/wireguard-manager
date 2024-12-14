@@ -1,0 +1,57 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run wgm CLI",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/wgm/console.py",
+      "args": [],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/wgm"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Run wgm CLI with Arguments",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/wgm/console.py",
+      "args": "${input:args}",
+      "argsPrompt": true,
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/wgm"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Test wgm",
+      "type": "python",
+      "request": "launch",
+      "module": "unittest",
+      "args": [
+        "discover",
+        "-s",
+        "tests"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/wgm",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/wgm"
+      },
+      "justMyCode": false
+    }
+  ],
+  "inputs": [
+    {
+      "id": "args",
+      "type": "promptString",
+      "description": "Arguments for wgm CLI",
+      "default": "list"
+    }
+  ]
+}
