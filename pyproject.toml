@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "wgm"
-version = "0.1.4"
+version = "0.1.6"
 description = "WireGuard Manager (wgm) is a command-line tool designed to simplify the management of WireGuard VPN users. It allows you to easily create, list, and delete WireGuard users with a few simple commands."
 authors = ["Roberto Lizana <rober.lizana@gmail.com>"]
 readme = "README.md"
