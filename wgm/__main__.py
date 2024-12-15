@@ -4,6 +4,7 @@ from wgm import __version__
 from wgm.commands.create import CreateCommand
 from wgm.commands.delete import DeleteCommand
 from wgm.commands.list import ListCommand
+from wgm.commands.version import VersionCommand
 
 
 def create_app():
@@ -15,9 +16,10 @@ def create_app():
     app._default_command = help_list_command.name
     app.add(help_list_command)
 
-    app.add(ListCommand())
     app.add(CreateCommand())
     app.add(DeleteCommand())
+    app.add(ListCommand())
+    app.add(VersionCommand())
 
     return app
 

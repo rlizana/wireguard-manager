@@ -2,7 +2,7 @@ import os
 import shutil
 import unittest
 
-from wgm.__main__ import create_app
+from wgm import __version__, create_app
 from cleo.testers.command_tester import CommandTester
 
 
@@ -84,3 +84,16 @@ class TestWGM(unittest.TestCase):
         with open(conf_file, 'r') as file:
             conf = file.read()
         self.assertIn('Address = ', conf)
+
+    def test_version(self):
+        result_code, output = self.execute('version')
+        self.assertEqual(result_code, 0)
+        self.assertIn(__version__, output)
+        pyproject_file = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '..', 'pyproject.toml')
+        )
+        with open(pyproject_file, 'r') as file:
+            content = file.read()
+        self.assertIn(
+            f'version = "{__version__}"', content,
+            'Not same version in pyproject.toml and wgm/__version__')

@@ -16,6 +16,7 @@ class DeleteCommand(Command):
     ]
 
     def handle(self):
+        self.read_config()
         name = self.argument('name')
         public_key = None
         for key, user in self.config.users.items():

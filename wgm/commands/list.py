@@ -6,6 +6,7 @@ class ListCommand(Command):
     description = 'List all users.'
 
     def handle(self):
+        self.read_config()
         users = self.config.users
         if not users:
             self.line('Not users.', 'warn')

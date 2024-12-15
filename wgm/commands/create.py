@@ -31,6 +31,7 @@ class CreateCommand(Command):
     ]
 
     def handle(self):
+        self.read_config()
         name = self.argument('name')
         if name in self.config.users.keys():
             self.line(f'User "{name}" already exists.', 'error')

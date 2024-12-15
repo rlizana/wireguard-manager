@@ -46,17 +46,11 @@ class Command(BaseCommand):
         self.add_style('warn', fg='yellow')
         self.add_style('success', fg='green')
 
-        if not os.path.exists(self.config.config_path):
-            self.line(f'Path {self.config.config_path} not exists!', 'error')
-            return 100
-        if not os.path.exists(self.config.wg_config_file):
-            self.line(
-                f'Config file {self.config.wg_config_file} not exists!',
-                'error')
-            return 101
-        self.read_config()
-
-        status_code = super().execute(io)
+        try:
+            status_code = super().execute(io)
+        except InterruptedError as exception:
+            self.line(exception.strerror or 'Unknown error', 'error')
+            status_code = exception.errno or 1
         return 0 if status_code is None else status_code
 
     def shell(self, cmd):
@@ -142,6 +136,14 @@ class Command(BaseCommand):
                     file.write('\n')
 
     def read_config(self):
+        # Check paths
+        if not os.path.exists(self.config.config_path):
+            raise InterruptedError(
+                100, f'Path {self.config.config_path} not exists!')
+        if not os.path.exists(self.config.wg_config_file):
+            raise InterruptedError(
+                101, f'Config file {self.config.wg_config_file} not exists!')
+
         # Read users
         clients_path = os.path.join(self.config.config_path, 'clients')
         if not os.path.exists(clients_path):
