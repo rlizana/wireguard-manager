@@ -180,7 +180,7 @@ class Command(BaseCommand):
         self.config.server_id = cdir['ip'][3]
         self.config.cdir = cdir
         self.config.server_public_key = self.read_file(
-            os.path.join(self.config.config_path, 'server_public_key')
+            os.path.join(self.config.config_path, 'server_key')
         )
 
     def cdir_to_dict(self, cdir_address: str) -> dict:

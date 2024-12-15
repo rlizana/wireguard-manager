@@ -1,4 +1,5 @@
+*.pyc
 .venv
 poetry.lock
 dist
-*.pyc
+tests/etc_wireguard
