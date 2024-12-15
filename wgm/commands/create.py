@@ -54,14 +54,17 @@ class CreateCommand(Command):
 
         # Prepare data
         user_ids = [int(u['id']) for u in self.config.users]
+        user_ids += [self.config.server_id]
         user_id = 1
-        while user_id not in user_ids and user_id != self.config.server_id:
+        while user_id in user_ids:
             user_id += 1
         allowed_cdirs = (
             self.option('allowed-cdirs').split(',')
             if self.option('allowed-cdirs') else []
         )
-        allowed_cdirs.insert(0, self.dict_to_cdir(self.config.cdir))
+        cdir = self.config.cdir.copy()
+        cdir['ip'][3] = 0
+        allowed_cdirs.insert(0, self.dict_to_cdir(cdir))
         user_address = self.config.cdir
         user_address['ip'][3] = user_id
         user_address['mask'] = 32

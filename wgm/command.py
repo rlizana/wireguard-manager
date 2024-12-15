@@ -171,6 +171,10 @@ class Command(BaseCommand):
 
         # Read wg0
         self.config.wg = self.read_config_file(self.config.wg_config_file)
+        if 'Peer' not in self.config.wg:
+            self.config.wg['Peer'] = []
+        if not isinstance(self.config.wg['Peer'], list):
+            self.config.wg['Peer'] = [self.config.wg['Peer']]
         self.config.hostname = self.shell('hostname -f')
         self.config.endpoint = ':'.join([
             self.config.hostname,
@@ -180,8 +184,14 @@ class Command(BaseCommand):
         self.config.server_id = cdir['ip'][3]
         self.config.cdir = cdir
         self.config.server_public_key = self.read_file(
-            os.path.join(self.config.config_path, 'server_key')
+            os.path.join(self.config.config_path, 'server_public_key')
         )
+        if not self.config.server_public_key:
+            raise InterruptedError(
+                102,
+                'Not server public key, check if file '
+                f'{self.config.config_path}/server_public_key exists'
+            )
 
     def cdir_to_dict(self, cdir_address: str) -> dict:
         parts = cdir_address.split('/')

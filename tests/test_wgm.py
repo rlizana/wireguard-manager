@@ -30,6 +30,9 @@ class TestWGM(unittest.TestCase):
 
     def test_path_not_exists(self):
         self.reset_test_folder()
+        os.remove(os.path.join(self.config_path, 'server_public_key'))
+        result_code, output = self.execute('create username')
+        self.assertEqual(result_code, 102)
         shutil.rmtree(self.config_path)
         result_code, output = self.execute('list')
         self.assertEqual(result_code, 100)
@@ -83,7 +86,8 @@ class TestWGM(unittest.TestCase):
         self.assertTrue(os.path.exists(conf_file))
         with open(conf_file, 'r') as file:
             conf = file.read()
-        self.assertIn('Address = ', conf)
+        self.assertIn('Address = 1.2.3.2/32', conf)
+        self.assertIn('AllowedIPs = 1.2.3.0/24, 0.0.0.0/24', conf)
 
     def test_version(self):
         result_code, output = self.execute('version')
