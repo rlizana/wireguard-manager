@@ -81,13 +81,31 @@ class TestWGM(unittest.TestCase):
     def test_create_user_wg0(self):
         self.reset_test_folder()
         self.execute('create user-1')
-        conf_file = os.path.join(
+        user_conf_file = os.path.join(
             self.config_path, 'clients', 'user-1', 'user-1.conf')
-        self.assertTrue(os.path.exists(conf_file))
-        with open(conf_file, 'r') as file:
-            conf = file.read()
-        self.assertIn('Address = 1.2.3.2/32', conf)
-        self.assertIn('AllowedIPs = 1.2.3.0/24, 0.0.0.0/24', conf)
+        self.assertTrue(os.path.exists(user_conf_file))
+        with open(user_conf_file, 'r') as file:
+            user_conf = file.read()
+        wg0_file = os.path.join(self.config_path, 'wg0.conf')
+        with open(wg0_file, 'r') as file:
+            wg0 = file.read()
+        server_public_file = os.path.join(
+            self.config_path, 'server_public_key')
+        with open(server_public_file, 'r') as file:
+            server_public_key = file.read().replace('\n', '').strip()
+        user_public_key_file = os.path.join(
+            self.config_path, 'clients', 'user-1', 'public_key')
+        with open(user_public_key_file, 'r') as file:
+            user_public_key = file.read().replace('\n', '').strip()
+        user_private_key_file = os.path.join(
+            self.config_path, 'clients', 'user-1', 'private_key')
+        with open(user_private_key_file, 'r') as file:
+            user_private_key = file.read().replace('\n', '').strip()
+        self.assertIn('Address = 1.2.3.2/32', user_conf)
+        self.assertIn('AllowedIPs = 1.2.3.0/24, 0.0.0.0/24', user_conf)
+        self.assertIn(f'PrivateKey = {user_private_key}', user_conf)
+        self.assertIn(f'PublicKey = {server_public_key}', user_conf)
+        self.assertIn(f'PublicKey = {user_public_key}', wg0)
 
     def test_version(self):
         result_code, output = self.execute('version')

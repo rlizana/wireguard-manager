@@ -50,7 +50,7 @@ class CreateCommand(Command):
             f'wg genkey | tee {user_path}/private_key '
             f'| wg pubkey > {user_path}/public_key')
         user_private_key = self.read_file(f'{user_path}/private_key')
-        user_public_key = self.read_file(f'{user_path}/private_key')
+        user_public_key = self.read_file(f'{user_path}/public_key')
 
         # Prepare data
         user_ids = [int(u['id']) for u in self.config.users]
