@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from wgm.command import Command
 from cleo.helpers import argument, option
@@ -33,7 +34,7 @@ class CreateCommand(Command):
     def handle(self):
         self.read_config()
         name = self.argument('name')
-        if name in self.config.users.keys():
+        if name in [v['name'] for k, v in self.config.users.items()]:
             self.line(f'User "{name}" already exists.', 'error')
             return 1
         clients_path = os.path.join(self.config.config_path, 'clients')
@@ -43,8 +44,14 @@ class CreateCommand(Command):
         if os.path.exists(user_path):
             self.line(f'User "{name}" already exists.', 'error')
             return 1
-        os.mkdir(user_path)
+        try:
+            os.mkdir(user_path)
+            return self.create_user(name, user_path)
+        except Exception as exception:
+            shutil.rmtree(user_path)
+            raise exception
 
+    def create_user(self, name, user_path):
         # Generate private key
         self.shell(
             f'wg genkey | tee {user_path}/private_key '
@@ -53,7 +60,7 @@ class CreateCommand(Command):
         user_public_key = self.read_file(f'{user_path}/public_key')
 
         # Prepare data
-        user_ids = [int(u['id']) for u in self.config.users]
+        user_ids = [int(v['id']) for k, v in self.config.users.items()]
         user_ids += [self.config.server_id]
         user_id = 1
         while user_id in user_ids:
