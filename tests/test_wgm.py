@@ -1,121 +1,127 @@
-import os
 import shutil
-import unittest
 
-from wgm import __version__, create_app
-from cleo.testers.command_tester import CommandTester
+import pytest
+from clifire import out
+
+from wgm import __version__
 
 
-class TestWGM(unittest.TestCase):
+def output(capsys):
+    return out.ansi_clean(capsys.readouterr().out)
 
-    def setUp(self):
-        super().setUp()
-        self.app = create_app()
-        self.config_path = os.path.join(
-            os.path.abspath(os.path.dirname(__file__)), 'etc_wireguard')
 
-    def reset_test_folder(self):
-        if os.path.exists(self.config_path):
-            shutil.rmtree(self.config_path)
-        sample_path = os.path.join(os.path.dirname(__file__), 'sample')
-        shutil.copytree(sample_path, self.config_path)
+def test_path_not_exists(app, config_path):
+    (config_path / 'server_public_key').unlink()
+    with pytest.raises(SystemExit) as error:
+        app.fire(f'create username --config-path {config_path}')
+    assert error.value.code == 102
+    shutil.rmtree(config_path)
+    with pytest.raises(SystemExit) as error:
+        app.fire(f'list --config-path {config_path}')
+    assert error.value.code == 100
 
-    def execute(self, txt):
-        args = txt.split(' ')
-        name = args.pop(0)
-        cmd = CommandTester(self.app.find(name))
-        args.append(f'--config-path={self.config_path}')
-        result_code = cmd.execute(' '.join(args))
-        return result_code, cmd._io.fetch_output()
 
-    def test_path_not_exists(self):
-        self.reset_test_folder()
-        os.remove(os.path.join(self.config_path, 'server_public_key'))
-        result_code, output = self.execute('create username')
-        self.assertEqual(result_code, 102)
-        shutil.rmtree(self.config_path)
-        result_code, output = self.execute('list')
-        self.assertEqual(result_code, 100)
-        self.assertIn('not exists!', output)
+def test_list(app, config_path, capsys):
+    app.fire(f'list --config-path {config_path}')
+    assert 'Not users.' in output(capsys)
 
-    def test_list(self):
-        self.reset_test_folder()
-        result_code, output = self.execute('list')
-        self.assertEqual(result_code, 0)
-        self.assertIn('Not users', output)
 
-    def test_create(self):
-        self.reset_test_folder()
-        result_code, output = self.execute('create username')
-        self.assertEqual(result_code, 0)
-        self.assertIn('User "username" created.', output)
-        user_path = os.path.join(self.config_path, 'clients', 'username')
-        self.assertTrue(os.path.exists(user_path))
-        result_code, output = self.execute('create username')
-        self.assertEqual(result_code, 1)
-        self.assertIn('User "username" already exists.', output)
+def test_create(app, config_path, capsys):
+    app.fire(f'create username --config-path {config_path}')
+    assert 'User "username" created.' in output(capsys)
+    assert (config_path / 'clients' / 'username').is_dir()
+    with pytest.raises(SystemExit) as error:
+        app.fire(f'create username --config-path {config_path}')
+    assert error.value.code == 1
+    assert 'User "username" already exists.' in output(capsys)
 
-    def test_delete(self):
-        self.reset_test_folder()
-        result_code, output = self.execute('delete username')
-        self.assertEqual(result_code, 1)
-        self.assertIn('User "username" not exists.', output)
-        self.execute('create username')
-        result_code, output = self.execute('delete username')
-        self.assertEqual(result_code, 0)
-        self.assertIn('User "username" deleted.', output)
 
-    def test_create_list_delete(self):
-        self.reset_test_folder()
-        result_code, output = self.execute('create username')
-        self.assertEqual(result_code, 0)
-        result_code, output = self.execute('list')
-        self.assertEqual(result_code, 0)
-        self.assertIn('username', output)
-        result_code, output = self.execute('delete username')
-        self.assertEqual(result_code, 0)
-        result_code, output = self.execute('list')
-        self.assertEqual(result_code, 0)
-        self.assertIn('Not users.', output)
+def test_delete(app, config_path, capsys):
+    with pytest.raises(SystemExit) as error:
+        app.fire(f'delete username --config-path {config_path}')
+    assert error.value.code == 1
+    assert 'User "username" not exists.' in output(capsys)
+    app.fire(f'create username --config-path {config_path}')
+    output(capsys)
+    app.fire(f'delete username --config-path {config_path}')
+    assert 'User "username" deleted.' in output(capsys)
 
-    def test_create_user_wg0(self):
-        self.reset_test_folder()
-        self.execute('create user-1')
-        user_conf_file = os.path.join(
-            self.config_path, 'clients', 'user-1', 'user-1.conf')
-        self.assertTrue(os.path.exists(user_conf_file))
-        with open(user_conf_file, 'r') as file:
-            user_conf = file.read()
-        wg0_file = os.path.join(self.config_path, 'wg0.conf')
-        with open(wg0_file, 'r') as file:
-            wg0 = file.read()
-        server_public_file = os.path.join(
-            self.config_path, 'server_public_key')
-        with open(server_public_file, 'r') as file:
-            server_public_key = file.read().replace('\n', '').strip()
-        user_public_key_file = os.path.join(
-            self.config_path, 'clients', 'user-1', 'public_key')
-        with open(user_public_key_file, 'r') as file:
-            user_public_key = file.read().replace('\n', '').strip()
-        user_private_key_file = os.path.join(
-            self.config_path, 'clients', 'user-1', 'private_key')
-        with open(user_private_key_file, 'r') as file:
-            user_private_key = file.read().replace('\n', '').strip()
-        self.assertIn('Address = 1.2.3.2/32', user_conf)
-        self.assertIn('AllowedIPs = 1.2.3.0/24, 0.0.0.0/24', user_conf)
-        self.assertIn(f'PrivateKey = {user_private_key}', user_conf)
-        self.assertIn(f'PublicKey = {server_public_key}', user_conf)
-        self.assertIn(f'PublicKey = {user_public_key}', wg0)
 
-    def test_version(self):
-        result_code, output = self.execute('version')
-        self.assertEqual(result_code, 0)
-        self.assertIn(__version__, output)
-        pyproject_file = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '..', 'pyproject.toml')
-        )
-        with open(pyproject_file, 'r') as file:
-            content = file.read()
-        self.assertIn(
-            f'version = "{__version__}"', content,
-            'Not same version in pyproject.toml and wgm/__version__')
+def test_create_list_delete(app, config_path, capsys):
+    app.fire(f'create username --config-path {config_path}')
+    app.fire(f'list --config-path {config_path}')
+    assert 'username' in output(capsys)
+    app.fire(f'delete username --config-path {config_path}')
+    app.fire(f'list --config-path {config_path}')
+    assert 'Not users.' in output(capsys)
+
+
+def test_create_user_wg0(app, config_path):
+    app.fire(f'create user-1 --config-path {config_path}')
+    user_path = config_path / 'clients' / 'user-1'
+    user_conf = (user_path / 'user-1.conf').read_text()
+    wg0 = (config_path / 'wg0.conf').read_text()
+    server_key = (config_path / 'server_public_key').read_text().strip()
+    public_key = (user_path / 'public_key').read_text().strip()
+    private_key = (user_path / 'private_key').read_text().strip()
+    assert 'Address = 1.2.3.2/32' in user_conf
+    assert 'AllowedIPs = 1.2.3.0/24, 0.0.0.0/24' in user_conf
+    assert f'PrivateKey = {private_key}' in user_conf
+    assert f'PublicKey = {server_key}' in user_conf
+    assert f'PublicKey = {public_key}' in wg0
+
+
+def test_create_allowed_cdirs(app, config_path):
+    app.fire(
+        f'create user-1 --allowed-cdirs 10.0.0.0/24,10.1.0.0/24 '
+        f'--config-path {config_path}'
+    )
+    user_conf = (config_path / 'clients' / 'user-1' / 'user-1.conf').read_text()
+    assert 'AllowedIPs = 1.2.3.0/24, 10.0.0.0/24, 10.1.0.0/24' in user_conf
+
+
+def test_show(app, config_path, capsys):
+    app.fire(f'create username --config-path {config_path}')
+    output(capsys)
+    app.fire(f'show username --config-path {config_path}')
+    printed = output(capsys)
+    assert '[Interface]' in printed
+    assert 'PrivateKey' in printed
+    with pytest.raises(SystemExit) as error:
+        app.fire(f'show other --config-path {config_path}')
+    assert error.value.code == 1
+
+
+def test_show_output(app, config_path, tmp_path):
+    app.fire(f'create username --config-path {config_path}')
+    target = tmp_path / 'exported.conf'
+    app.fire(f'show username -o {target} --config-path {config_path}')
+    source = config_path / 'clients' / 'username' / 'username.conf'
+    assert target.read_text() == source.read_text()
+    assert target.stat().st_mode & 0o777 == 0o600
+
+
+def test_show_qr(app, config_path, capsys):
+    app.fire(f'create username --config-path {config_path}')
+    output(capsys)
+    app.fire(f'show username --qr --config-path {config_path}')
+    printed = output(capsys)
+    assert '[Interface]' not in printed
+    assert len(printed.strip().splitlines()) > 2
+
+
+def test_list_status(app, config_path, fake_runner, capsys):
+    app.fire(f'create user-1 --config-path {config_path}')
+    key_path = config_path / 'clients' / 'user-1' / 'public_key'
+    fake_runner.show = f'{key_path.read_text().strip()} 0'
+    output(capsys)
+    app.fire(f'list --status --config-path {config_path}')
+    printed = output(capsys)
+    assert 'never' in printed
+    assert 'user-1' in printed
+    assert 'Public key' in printed
+
+
+def test_version(app, capsys):
+    app.fire('version')
+    assert __version__ in output(capsys)

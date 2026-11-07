@@ -1,31 +1,34 @@
-from wgm.command import Command
+from clifire import command, out
+
+from wgm.commands.base import WgmCommand
 
 
-class ListCommand(Command):
-    name = 'list'
-    description = 'List all users.'
+class ListCommand(WgmCommand):
+    _name = 'list'
+    _help = 'List all users.'
 
-    def handle(self):
-        self.read_config()
-        users = self.config.users
-        if not users:
-            self.line('Not users.', 'warn')
+    status = command.Field(
+        default=False,
+        help='Show the last handshake of every user',
+    )
+
+    def fire(self):
+        server = self.server()
+        if not server.users:
+            out.warn('Not users.')
             return 0
-        table = self.table()
-        table.set_headers([
-            'ID', 'Name', 'Private key', 'Address', 'Ping'])
-        table.set_rows([
-            [
-                str(user['id']),
-                user['name'],
-                private_key,
-                self.dict_to_cdir(user['cdir']),
-                'Yes' if self.ip_alive(user['cdir']) else 'No',
-            ] for private_key, user in users.items()
-        ])
-        table.render()
-
-    def ip_alive(self, cdir: dict):
-        ip = '.'.join([str(b) for b in cdir['ip']])
-        status_code = self.shell(f'ping -c 1 -W 1 {ip}')
-        return status_code == 0
+        handshakes = server.handshakes() if self.status else None
+        users = sorted(server.users.values(), key=lambda user: user.name)
+        data = []
+        for user in users:
+            row = {
+                'ID': str(server.user_id(user.address)),
+                'Name': user.name,
+                'Public key': user.public_key,
+                'Address': str(user.address),
+            }
+            if self.status:
+                row['Status'] = server.status(user.public_key, handshakes)
+            data.append(row)
+        out.table(data)
+        return 0

@@ -3,46 +3,35 @@
   "configurations": [
     {
       "name": "Run wgm CLI",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/wgm/__main__.py",
+      "module": "wgm",
       "args": [],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}/wgm"
-      },
       "justMyCode": false
     },
     {
       "name": "Run wgm CLI with Arguments",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/wgm/__main__.py",
+      "module": "wgm",
       "args": "${input:args}",
       "argsPrompt": true,
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}/wgm"
-      },
       "justMyCode": false
     },
     {
       "name": "Test wgm",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
-      "module": "unittest",
+      "module": "pytest",
       "args": [
-        "discover",
-        "-s",
-        "tests"
+        "-v"
       ],
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/wgm",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}/wgm"
-      },
+      "cwd": "${workspaceFolder}",
       "justMyCode": false
     }
   ],

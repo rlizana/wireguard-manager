@@ -1,5 +1,8 @@
 *.pyc
+__pycache__/
+.pytest_cache/
+.ruff_cache/
 .venv
-poetry.lock
 dist
+build
 tests/etc_wireguard

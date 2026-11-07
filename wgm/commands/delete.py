@@ -1,36 +1,22 @@
-import os
-import shutil
+from clifire import command, out
 
-from wgm.command import Command
-from cleo.helpers import argument
+from wgm.commands.base import WgmCommand
 
 
-class DeleteCommand(Command):
-    name = 'delete'
-    description = 'Delete a WireGuard user.'
-    arguments = [
-        argument(
-            name='name',
-            description='The user name',
-        ),
-    ]
+class DeleteCommand(WgmCommand):
+    _name = 'delete'
+    _help = 'Delete a WireGuard user.'
 
-    def handle(self):
-        self.read_config()
-        name = self.argument('name')
-        public_key = None
-        for key, user in self.config.users.items():
-            if user['name'] == name:
-                public_key = key
-                break
-        if not public_key:
-            self.line(f'User "{name}" not exists.', 'error')
-            return 1
-        for peer in self.config.wg['Peer']:
-            if peer['PublicKey'] == public_key:
-                self.config.wg['Peer'].remove(peer)
-                break
-        self.write_config_file(self.config.wg_config_file, self.config.wg)
-        clients_path = os.path.join(self.config.config_path, 'clients')
-        shutil.rmtree(os.path.join(clients_path, name))
-        self.line(f'User "{name}" deleted.', 'success')
+    name = command.Field(pos=0, help='The user name')
+    apply = command.Field(
+        default=False,
+        help='Apply changes to the running interface',
+    )
+
+    def fire(self):
+        server = self.server()
+        server.delete_user(self.name)
+        out.success(f'User "{self.name}" deleted.')
+        if self.apply:
+            server.apply()
+        return 0
